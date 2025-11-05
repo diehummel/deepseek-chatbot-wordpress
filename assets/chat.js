@@ -7,17 +7,14 @@ jQuery(function ($) {
     const $x = $('#dsb-close');
     let first = true;
 
-    // ÖFFNEN
     $b.on('click', () => {
         $c.toggleClass('closed');
         if (first) { setTimeout(welcome, 400); first = false; }
-        setTimeout(() => $i.focus(), 500);  // <-- CURSOR rein!
+        setTimeout(() => $i.focus(), 500);
     });
 
     $x.on('click', () => $c.addClass('closed'));
     $s.on('click', send);
-
-    // ENTER (ohne Shift)
     $i.on('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -41,7 +38,13 @@ jQuery(function ($) {
             msg: msg,
             nonce: dsb.nonce
         }, r => {
-            $m.append('<div class="bot">Bot: ' + (r.success ? r.data : 'Fehler') + '</div>');
+            // MAGIC: URLs werden klickbar + _blank!
+            let text = r.success ? r.data : r.data;
+            text = text.replace(
+                /(https?:\/\/[^\s]+)/g,
+                '<a href="$1" target="_blank" rel="noopener" style="color:#0073aa; text-decoration:underline;">$1</a>'
+            );
+            $m.append('<div class="bot">' + text + '</div>');
             scroll();
         });
     }
@@ -50,6 +53,5 @@ jQuery(function ($) {
         $m.scrollTop($m[0].scrollHeight);
     }
 
-    // Puls
     setInterval(() => $b.toggleClass('pulse'), 3000);
 });
