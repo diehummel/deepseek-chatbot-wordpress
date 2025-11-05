@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DeepSeek Chatbot
  * Description: KI-Sprechblase mit voller Website-Intelligenz
- * Version: 1.4.1
+ * Version: 1.0.0
  * Author: Du
  */
 
