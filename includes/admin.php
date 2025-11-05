@@ -2,48 +2,37 @@
 if (!defined('ABSPATH')) exit;
 
 add_action('admin_menu', function() {
-    add_options_page('DeepSeek Chatbot', 'DeepSeek Chatbot', 'manage_options', 'deepseek-chatbot', 'deepseek_chatbot_page');
+    add_options_page('DeepSeek Chatbot', 'DeepSeek Chatbot', 'manage_options', 'dsb', 'dsb_page');
 });
 
-function deepseek_chatbot_page() {
-    if ($_POST['deepseek_api_key'] ?? false) {
-        update_option('deepseek_api_key', sanitize_text_field($_POST['deepseek_api_key']));
-        echo '<div class="notice notice-success"><p>API-Key gespeichert!</p></div>';
+function dsb_page() {
+    if ($_POST['save']) {
+        update_option('deepseek_api_key', sanitize_text_field($_POST['key']));
+        update_option('dsb_welcome', wp_kses_post($_POST['welcome']));
+        echo '<div class="notice notice-success"><p>Gespeichert!</p></div>';
     }
-    if ($_POST['crawl_site'] ?? false) {
-        deepseek_chatbot_crawl();
-    }
-    $key = get_option('deepseek_api_key', '');
-    $data = get_option('deepseek_site_data', []);
+    if ($_POST['crawl']) deepseek_crawl();
     ?>
     <div class="wrap">
         <h1>DeepSeek Chatbot</h1>
         <form method="post">
             <table class="form-table">
-                <tr><th>API-Key</th><td><input type="password" name="deepseek_api_key" value="<?=esc_attr($key)?>" class="regular-text">
-                    <p><a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a></p></td></tr>
+                <tr>
+                    <th>API-Key</th>
+                    <td><input name="key" value="<?=esc_attr(get_option('deepseek_api_key'))?>" class="regular-text" type="password"></td>
+                </tr>
+                <tr>
+                    <th>Willkommensnachricht</th>
+                    <td><textarea name="welcome" rows="4" class="large-text"><?=esc_textarea(get_option('dsb_welcome', "Hallo! Ich bin dein KI-Assistent.\nFrag mich alles über diese Website! 😊"))?></textarea></td>
+                </tr>
             </table>
-            <?php submit_button('Speichern'); ?>
+            <p><input type="submit" name="save" class="button button-primary" value="Speichern"></p>
         </form>
         <hr>
-        <h2>Website lernen</h2>
-        <form method="post"><input type="hidden" name="crawl_site" value="1">
-            <?php submit_button('Vollständig crawlen', 'secondary'); ?>
+        <form method="post">
+            <input type="hidden" name="crawl" value="1">
+            <p><input type="submit" class="button" value="Website jetzt crawlen"></p>
         </form>
-        <p>✓ <?=count($data)?> Seiten gespeichert</p>
     </div>
     <?php
-}
-
-function deepseek_chatbot_crawl() {
-    $posts = get_posts(['numberposts' => -1, 'post_status' => 'publish', 'post_type' => ['post','page']]);
-    $data = [];
-    foreach ($posts as $p) {
-        $data[$p->ID] = [
-            'title'   => $p->post_title,
-            'content' => wp_strip_all_tags($p->post_content),
-            'url'     => get_permalink($p->ID)
-        ];
-    }
-    update_option('deepseek_site_data', $data);
 }
