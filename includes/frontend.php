@@ -6,62 +6,59 @@ add_action('wp_ajax_nopriv_dsb_chat', 'dsb_chat');
 
 function dsb_chat() {
     check_ajax_referer('dsb', 'nonce');
-
     $key = trim(get_option('deepseek_api_key'));
-    if (!$key) {
-        wp_send_json_error('🔥 KEIN API-KEY! Trage ihn im Backend ein!');
-        return;
-    }
+    if (!$key) { wp_send_json_error('API-Key fehlt!'); }
 
     $msg = sanitize_text_field($_POST['msg']);
-
-    // Crawlen falls leer
     $site = get_option('dsb_site', []);
-    if (empty($site)) deepseek_crawl();
-    $site = get_option('dsb_site', []);
+    if (empty($site)) { deepseek_crawl(); $site = get_option('dsb_site', []); }
 
-    $ctx = '';
-    foreach ($site as $p) $ctx .= "Titel: {$p['title']}\n{$p['content']}\n\n";
+    // NEU: Nur die 5 relevantesten Seiten (max 12.000 Zeichen)
+    $words = preg_split('/\s+/', strtolower($msg));
+    $scores = [];
+    foreach ($site as $i => $p) {
+        $text = strtolower($p['title'] . ' ' . substr($p['content'],0,800));
+        $score = 0;
+        foreach ($words as $w) if (strlen($w)>2) $score += substr_count($text, $w);
+        $scores[$i] = $score;
+    }
+    arsort($scores);
+    $top = array_slice($scores, 0, 5, true);
 
-    // API CALL
+    $ctx = "Du kennst genau diese Seiten:\n";
+    $used = 0;
+    foreach ($top as $i => $score) {
+        if ($used > 11000) break;
+        $page = $site[$i];
+        $chunk = "Seite: {$page['title']}\n{$page['content']}\n\n";
+        if ($used + strlen($chunk) > 12000) {
+            $chunk = substr($chunk, 0, 12000 - $used);
+        }
+        $ctx .= $chunk;
+        $used += strlen($chunk);
+    }
+
     $res = wp_remote_post('https://api.deepseek.com/chat/completions', [
-        'headers' => [
-            'Authorization' => "Bearer $key",
-            'Content-Type'  => 'application/json'
-        ],
+        'headers' => ['Authorization' => "Bearer $key", 'Content-Type' => 'application/json'],
         'body' => json_encode([
             'model' => 'deepseek-chat',
             'messages' => [
-                ['role' => 'system', 'content' => "Website-Kontext:\n$ctx"],
+                ['role' => 'system', 'content' => $ctx],
                 ['role' => 'user',   'content' => $msg]
             ],
-            'temperature' => 0.7
+            'temperature' => 0.6,
+            'max_tokens' => 800
         ]),
         'timeout' => 90
     ]);
 
-    // ====== DIE WAHRHEIT KOMMT JETZT ======
-    if (is_wp_error($res)) {
-        wp_send_json_error('INTERNET-PROBLEM: ' . $res->get_error_message());
-        return;
-    }
-
+    if (is_wp_error($res)) { wp_send_json_error('Internet: ' . $res->get_error_message()); }
     $code = wp_remote_retrieve_response_code($res);
     $body = wp_remote_retrieve_body($res);
-
-    if ($code !== 200) {
-        // DEEPSEEK REDT MIT DIR!
-        wp_send_json_error("DEEPSEEK (Code $code):\n$body");
-        return;
-    }
+    if ($code !== 200) { wp_send_json_error("DeepSeek (Code $code): $body"); }
 
     $json = json_decode($body, true);
-    if (!isset($json['choices'][0]['message']['content'])) {
-        wp_send_json_error("DeepSeek JSON-Fehler:\n" . print_r($json, true));
-        return;
-    }
-
-    $answer = $json['choices'][0]['message']['content'];
+    $answer = $json['choices'][0]['message']['content'] ?? 'Oops';
     wp_send_json_success($answer);
 }
 
@@ -70,10 +67,11 @@ function deepseek_crawl() {
     $data = [];
     foreach ($posts as $p) {
         $data[] = [
-            'title'   => $p->post_title,
+            'title' => $p->post_title,
             'content' => wp_strip_all_tags($p->post_content)
         ];
     }
     update_option('dsb_site', $data);
+    return count($data);
 }
 ?>
