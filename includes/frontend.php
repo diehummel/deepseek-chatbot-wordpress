@@ -6,56 +6,74 @@ add_action('wp_ajax_nopriv_dsb_chat', 'dsb_chat');
 
 function dsb_chat() {
     check_ajax_referer('dsb', 'nonce');
-    $key = get_option('deepseek_api_key');
-    if (!$key) wp_send_json_error('API-Key fehlt');
+
+    $key = trim(get_option('deepseek_api_key'));
+    if (!$key) {
+        wp_send_json_error('🔥 KEIN API-KEY! Trage ihn im Backend ein!');
+        return;
+    }
 
     $msg = sanitize_text_field($_POST['msg']);
+
+    // Crawlen falls leer
     $site = get_option('dsb_site', []);
-    if (empty($site)) {
-        $count = deepseek_crawl();
-        $site = get_option('dsb_site', []);
-    }
+    if (empty($site)) deepseek_crawl();
+    $site = get_option('dsb_site', []);
 
     $ctx = '';
     foreach ($site as $p) $ctx .= "Titel: {$p['title']}\n{$p['content']}\n\n";
 
+    // API CALL
     $res = wp_remote_post('https://api.deepseek.com/chat/completions', [
-        'headers' => ['Authorization' => "Bearer $key", 'Content-Type' => 'application/json'],
+        'headers' => [
+            'Authorization' => "Bearer $key",
+            'Content-Type'  => 'application/json'
+        ],
         'body' => json_encode([
             'model' => 'deepseek-chat',
             'messages' => [
-                ['role' => 'system', 'content' => "Website-Kontext (vollständig):\n$ctx"],
-                ['role' => 'user', 'content' => $msg]
+                ['role' => 'system', 'content' => "Website-Kontext:\n$ctx"],
+                ['role' => 'user',   'content' => $msg]
             ],
             'temperature' => 0.7
         ]),
-        'timeout' => 60
+        'timeout' => 90
     ]);
 
+    // ====== DIE WAHRHEIT KOMMT JETZT ======
     if (is_wp_error($res)) {
-    wp_send_json_error('NETZWERK-PROBLEM: ' . $res->get_error_message());
+        wp_send_json_error('INTERNET-PROBLEM: ' . $res->get_error_message());
+        return;
+    }
+
+    $code = wp_remote_retrieve_response_code($res);
+    $body = wp_remote_retrieve_body($res);
+
+    if ($code !== 200) {
+        // DEEPSEEK REDT MIT DIR!
+        wp_send_json_error("DEEPSEEK (Code $code):\n$body");
+        return;
+    }
+
+    $json = json_decode($body, true);
+    if (!isset($json['choices'][0]['message']['content'])) {
+        wp_send_json_error("DeepSeek JSON-Fehler:\n" . print_r($json, true));
+        return;
+    }
+
+    $answer = $json['choices'][0]['message']['content'];
+    wp_send_json_success($answer);
 }
-
-$body = wp_remote_retrieve_body($res);
-$code = wp_remote_retrieve_response_code($res);
-
-if ($code !== 200) {
-    // DEEPSEEK REDT JETZT MIT UNS!
-    wp_send_json_error("DEEPSEEK SAGT (Code $code): " . ($body ?: 'keine Antwort'));
-}
-
-$json = json_decode($body, true);
-$answer = $json['choices'][0]['message']['content'] ?? 'Leere Antwort';
 
 function deepseek_crawl() {
-    $posts = get_posts(['numberposts' => -1, 'post_status' => 'publish', 'post_type' => ['post', 'page']]);
+    $posts = get_posts(['numberposts' => -1, 'post_status' => 'publish']);
     $data = [];
     foreach ($posts as $p) {
         $data[] = [
-            'title' => $p->post_title,
+            'title'   => $p->post_title,
             'content' => wp_strip_all_tags($p->post_content)
         ];
     }
     update_option('dsb_site', $data);
-    return count($data);
 }
+?>
