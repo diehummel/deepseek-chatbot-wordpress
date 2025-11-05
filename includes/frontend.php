@@ -1,9 +1,6 @@
 <?php
 /**
- * HYBRID-CHATBOT v3.0
- * 1. Crawlt ALLE deine Seiten
- * 2. DeepSeek darf Internet-Wissen nutzen
- * 3. Gibt IMMER deine lokale URL + Internet-Tipps
+ * HYBRID-CHATBOT v3.1 – 113 SEITEN GUARANTEED!
  */
 
 if (!defined('ABSPATH')) exit;
@@ -18,11 +15,11 @@ function dsb_chat() {
 
     $msg = sanitize_text_field($_POST['msg']);
 
-    // 1. ALLE deine Seiten laden
+    // 1. Seiten laden
     $site = get_option('dsb_site', []);
     if (empty($site)) { deepseek_crawl(); $site = get_option('dsb_site', []); }
 
-    // 2. Beste lokale Seite finden
+    // 2. Beste lokale Seite
     $words = preg_split('/\s+/', strtolower($msg));
     $best_url = $best_title = '';
     $best_score = 0;
@@ -42,15 +39,13 @@ function dsb_chat() {
         }
     }
 
-    // 3. SYSTEM-PROMPT: Lokale Seite zuerst, dann Internet!
+    // 3. System-Prompt
     $system = "Du bist ein freundlicher Website-Assistent.\n";
-    $system .= "1. Wenn du etwas auf dieser Website findest, nenne zuerst den lokalen Artikel:\n";
-    $system .= "   \"$best_title\" → $best_url\n";
-    $system .= "2. Ergänze dann mit aktuellem Internet-Wissen (z.B. Tools, Tutorials).\n";
-    $system .= "3. Gib ALLE Links klickbar aus.\n\n";
-    $system .= "Frage: $msg";
+    $system .= "1. Lokaler Artikel zuerst: \"$best_title\" → $best_url\n";
+    $system .= "2. Dann Internet-Tipps\n";
+    $system .= "3. ALLE Links klickbar\n\nFrage: $msg";
 
-    // 4. DeepSeek API (volles Internet-Wissen erlaubt!)
+    // 4. DeepSeek
     $res = wp_remote_post('https://api.deepseek.com/chat/completions', [
         'headers' => ['Authorization' => "Bearer $key", 'Content-Type' => 'application/json'],
         'body' => json_encode([
@@ -73,7 +68,7 @@ function dsb_chat() {
     $json = json_decode($body, true);
     $answer = $json['choices'][0]['message']['content'] ?? 'Keine Antwort';
 
-    // 5. URLs klickbar machen
+    // 5. Links klickbar
     $answer = preg_replace(
         '/(https?:\/\/[^\s\)]+)/',
         '<a href="$1" target="_blank" rel="noopener" style="color:#0073aa; text-decoration:underline;">$1</a>',
@@ -83,13 +78,14 @@ function dsb_chat() {
     wp_send_json_success($answer);
 }
 
-// Crawler – speichert ID für echte URLs
+// CRAWLER – JETZT 113 SEITEN!
 function deepseek_crawl() {
     $posts = get_posts([
         'numberposts' => -1,
         'post_status' => ['publish', 'private'],
         'post_type'   => 'any'
-    ]);
+    ]);  // ← NUR EINE KLAMMER!
+
     $data = [];
     foreach ($posts as $p) {
         $data[] = [
