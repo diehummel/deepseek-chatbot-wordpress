@@ -32,10 +32,17 @@ function dsb_chat() {
         'timeout' => 60
     ]);
 
-    if (is_wp_error($res)) wp_send_json_error('Netzwerk-Fehler');
-    $json = json_decode(wp_remote_retrieve_body($res), true);
-    $answer = $json['choices'][0]['message']['content'] ?? 'Oops';
-    wp_send_json_success($answer);
+    if (is_wp_error($res)) {
+    wp_send_json_error('API-Fehler: ' . $res->get_error_message());
+}
+$body = wp_remote_retrieve_body($res);
+$code = wp_remote_retrieve_response_code($res);
+$json = json_decode($body, true);
+
+if ($code !== 200) {
+    wp_send_json_error("DeepSeek sagt (Code $code): " . ($json['error']['message'] ?? $body));
+}
+$answer = $json['choices'][0]['message']['content'] ?? 'Leere Antwort';
 }
 
 function deepseek_crawl() {
