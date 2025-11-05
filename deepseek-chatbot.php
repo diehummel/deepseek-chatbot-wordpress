@@ -1,46 +1,33 @@
 <?php
 /**
  * Plugin Name: DeepSeek Chatbot
- * Description: Floating AI-Chatbubble mit voller Website-KI (DeepSeek API)
- * Version: 1.0.0
- * Author: Grok
+ * Description: KI-Sprechblase mit voller Website-Intelligenz
+ * Version: 1.3
+ * Author: Du + Grok
  */
 
 if (!defined('ABSPATH')) exit;
-define('DEEPSEEK_CHATBOT_VERSION', '1.2.0');
-define('DEEPSEEK_CHATBOT_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('DEEPSEEK_CHATBOT_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('DSB_URL', plugin_dir_url(__FILE__));
+define('DSB_PATH', plugin_dir_path(__FILE__));
 
-if (is_admin()) {
-    require_once DEEPSEEK_CHATBOT_PLUGIN_PATH . 'includes/admin.php';
-}
-require_once DEEPSEEK_CHATBOT_PLUGIN_PATH . 'includes/frontend.php';
+require_once DSB_PATH . 'includes/admin.php';
+require_once DSB_PATH . 'includes/frontend.php';
 
 add_action('wp_enqueue_scripts', function() {
     if (is_admin()) return;
-    wp_enqueue_script('deepseek-js', DEEPSEEK_CHATBOT_PLUGIN_URL . 'assets/chat.js', ['jquery'], DEEPSEEK_CHATBOT_VERSION, true);
-    wp_enqueue_style('deepseek-css', DEEPSEEK_CHATBOT_PLUGIN_URL . 'assets/style.css', [], DEEPSEEK_CHATBOT_VERSION);
-    wp_localize_script('deepseek-js', 'deepseek_ajax', [
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce('deepseek_chat_nonce')
+    wp_enqueue_script('dsb-js', DSB_URL . 'assets/chat.js', ['jquery'], '1.3', true);
+    wp_enqueue_style('dsb-css', DSB_URL . 'assets/style.css', [], '1.3');
+    wp_localize_script('dsb-js', 'dsb', [
+        'ajax' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('dsb_nonce'),
+        'welcome' => get_option('dsb_welcome', "Hallo! Ich bin dein KI-Assistent.\nFrag mich alles über diese Website! 😊")
     ]);
 });
 
 add_action('wp_footer', function() {
     if (is_admin()) return; ?>
-    <div id="deepseek-chatbot-bubble">Chat</div>
-    <div id="deepseek-chatbot-container" class="closed">
-        <div id="chat-header"><span>DeepSeek Bot</span><button id="chat-close">×</button></div>
-        <div id="chat-messages"></div>
-        <div id="chat-input-container">
-            <input type="text" id="chat-input" placeholder="Frag mich zur Website…">
-            <button id="chat-send">Senden</button>
-        </div>
+    <div id="dsb-bubble">
+        <svg viewBox="0 0 24 24"><path fill="#fff" d="M20 2H4c-1.1 0-2 .9-2 2v14l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
     </div>
-
-register_uninstall_hook(__FILE__, 'deepseek_chatbot_uninstall');
-function deepseek_chatbot_uninstall() {
-    delete_option('deepseek_api_key');
-    delete_option('deepseek_site_data');
-}
-<?php });
+    <div id="dsb-chat" class="closed">
+        <div id="dsb-header">KI-Assistent <span id="dsb-close">
