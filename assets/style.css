@@ -1,26 +1,131 @@
-#dsb-bubble{position:fixed;bottom:25px;right:25px;width:62px;height:62px;background:#0073aa;color:#fff;border-radius:50%;font-size:34px;line-height:62px;text-align:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.3);z-index:9999;transition:.3s}
-#dsb-bubble.pulse{animation:pulse 1.5s infinite}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-#dsb-chat{position:fixed;bottom:100px;right:25px;width:380px;height:560px;background:#fff;border-radius:18px;box-shadow:0 15px 40px rgba(0,0,0,.3);z-index:9998;display:flex;flex-direction:column;opacity:0;transform:translateY(20px);transition:all .35s cubic-bezier(0.4,0,0.2,1);pointer-events:none}
-#dsb-chat:not(.closed){opacity:1;transform:translateY(0);pointer-events:all}
-#dsb-header{background:#0073aa;color:#fff;padding:14px 18px;font-weight:600;border-radius:18px 18px 0 0;display:flex;justify-content:space-between;align-items:center}
-#dsb-close{font-size:26px;cursor:pointer;background:none;border:none;color:#fff}
-#dsb-messages{flex:1;padding:16px;overflow-y:auto;background:#f9f9f9;font-size:15px;line-height:1.6}
-#dsb-messages div{margin:12px 0;padding:12px 16px;border-radius:16px;max-width:84%;word-wrap:break-word}
-.user{background:#e3f2fd;align-self:flex-end}
-.bot{background:#c8e6c9}
-#dsb-input{display:flex;padding:14px;background:#fff;border-top:1px solid #eee}
+/* ==================== START – style.css ==================== */
+#dsb-bubble{
+    position:fixed;
+    bottom:25px;
+    right:25px;
+    width:62px;
+    height:62px;
+    background:#0073aa;
+    color:#fff;
+    border-radius:50%;
+    font-size:34px;
+    line-height:62px;
+    text-align:center;
+    cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);
+    z-index:99999;
+    transition:transform .3s;
+    user-select:none;
+}
+#dsb-bubble:hover{transform:scale(1.1)}
+#dsb-bubble.pulse{animation:pulse 1.5s infinite}
+@keyframes pulse{
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.15)}
+}
+
+#dsb-chat{
+    position:fixed;
+    bottom:100px;
+    right:25px;
+    width:380px;
+    height:560px;
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 15px 40px rgba(0,0,0,.3);
+    z-index:99998;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    transform:translateY(20px);
+    transition:all .35s cubic-bezier(0.4,0,0.2,1);
+    pointer-events:none;
+}
+#dsb-chat:not(.closed){
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:all;
+}
+
+#dsb-header{
+    background:#0073aa;
+    color:#fff;
+    padding:14px 18px;
+    font-weight:600;
+    border-radius:18px 18px 0 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    user-select:none;
+}
+#dsb-close{
+    font-size:26px;
+    cursor:pointer;
+    background:none;
+    border:none;
+    color:#fff;
+}
+
+#dsb-messages{
+    flex:1;
+    padding:16px;
+    overflow-y:auto;
+    background:#f9f9f9;
+    font-size:15px;
+    line-height:1.6;
+}
+#dsb-messages div{
+    margin:12px 0;
+    padding:12px 16px;
+    border-radius:16px;
+    max-width:84%;
+    word-wrap:break-word;
+}
+.user{
+    background:#e3f2fd;
+    align-self:flex-end;
+    margin-left:auto;
+}
+.bot{
+    background:#c8e6c9;
+}
+
+#dsb-input{
+    display:flex;
+    padding:14px;
+    background:#fff;
+    border-top:1px solid #eee;
+    z-index:99999 !important;
+}
+
 #dsb-text{
     flex:1;
-    padding:12px;
-    border:2px solid #0073aa !important;   /* <-- BLAUER RAND */
+    padding:12px 16px;
+    border:2px solid #0073aa !important;
     border-radius:12px;
-    outline:none;
+    outline:none !important;
     font-size:15px;
-    background:#fff;
+    background:#fff !important;
     box-shadow:inset 0 1px 3px rgba(0,0,0,.1);
+    resize:none;
+    z-index:99999 !important;
+    pointer-events:all !important;
 }
 #dsb-text:focus{
     border-color:#005a87 !important;
-    box-shadow:0 0 0 3px rgba(0,115,170,.3) !important;
+    box-shadow:0 0 0 4px rgba(0,115,170,.3) !important;
 }
-#dsb-send{margin-left:10px;background:#0073aa;color:#fff;border:none;width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:20px}
+
+#dsb-send{
+    margin-left:10px;
+    background:#0073aa;
+    color:#fff;
+    border:none;
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:20px;
+    z-index:99999 !important;
+}
+/* ==================== ENDE – style.css ==================== */
