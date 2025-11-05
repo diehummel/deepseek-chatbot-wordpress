@@ -88,7 +88,7 @@ function deepseek_crawl() {
     $posts = get_posts([
         'numberposts' => -1,
         'post_status' => ['publish', 'private'],
-        'post_type'   => 'any',
+        'post_type'   => 'any'
     ]);
     $data = [];
     foreach ($posts as $p) {
