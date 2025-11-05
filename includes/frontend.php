@@ -34,11 +34,14 @@ function dsb_chat() {
         }
     }
 
-    // SYSTEM-PROMPT
-    $system = "Du bist ein freundlicher Website-Assistent.\n";
-    $system .= "1. Lokaler Artikel zuerst: \"$best_title\" → $best_url\n";
-    $system .= "2. Dann Internet-Tipps\n";
-    $system .= "3. ALLE Links klickbar\n\nFrage: $msg";
+     // 3. SMART-PROMPT: Nur echte Treffer verlinken!
+    $system = "Du bist ein schlanker Website-Assistent.\n";
+    if ($best_score > 30) {   // ← ECHT relevant!
+        $system .= "Lokaler Artikel: \"$best_title\"\n$best_url\n\n";
+    }
+    $system .= "Antworte kurz, ehrlich und nur mit Fakten.\n";
+    $system .= "Keine Datenschutz-Floskeln, Wenn nur ein externer Link.\n";
+    $system .= "Frage: $msg";
 
     // DEEPSEEK CALL
     $res = wp_remote_post('https://api.deepseek.com/chat/completions', array(
