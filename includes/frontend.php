@@ -92,7 +92,7 @@ function deepseek_crawl() {
     ]);
     $data = [];
     foreach ($posts as $p) {
-        $dataágot[] = [
+        $data[] = [
             'id'      => $p->ID,
             'title'   => $p->post_title,
             'content' => wp_strip_all_tags($p->post_content)
