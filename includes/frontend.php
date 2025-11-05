@@ -1,8 +1,4 @@
 <?php
-/**
- * HYBRID-CHATBOT v3.1 – 113 SEITEN GUARANTEED!
- */
-
 if (!defined('ABSPATH')) exit;
 
 add_action('wp_ajax_dsb_chat', 'dsb_chat');
