@@ -9,5 +9,18 @@
 .user{background:#e3f2fd;align-self:flex-end}
 .bot{background:#c8e6c9}
 #dsb-input{display:flex;padding:14px;background:#fff;border-top:1px solid #eee}
-#dsb-text{flex:1;padding:12px;border:1px solid #ccc;border-radius:12px;outline:none;font-size:15px}
+#dsb-text{
+    flex:1;
+    padding:12px;
+    border:2px solid #0073aa !important;   /* <-- BLAUER RAND */
+    border-radius:12px;
+    outline:none;
+    font-size:15px;
+    background:#fff;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.1);
+}
+#dsb-text:focus{
+    border-color:#005a87 !important;
+    box-shadow:0 0 0 3px rgba(0,115,170,.3) !important;
+}
 #dsb-send{margin-left:10px;background:#0073aa;color:#fff;border:none;width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:20px}
