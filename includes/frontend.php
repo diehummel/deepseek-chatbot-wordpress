@@ -11,11 +11,10 @@ function dsb_chat() {
 
     $msg = sanitize_text_field($_POST['msg']);
 
-    // 1. Seiten laden
     $site = get_option('dsb_site', []);
     if (empty($site)) { deepseek_crawl(); $site = get_option('dsb_site', []); }
 
-    // 2. Beste lokale Seite
+    // BESTE LOKALE SEITE FINDEN
     $words = preg_split('/\s+/', strtolower($msg));
     $best_url = $best_title = '';
     $best_score = 0;
@@ -35,26 +34,26 @@ function dsb_chat() {
         }
     }
 
-    // 3. System-Prompt
+    // SYSTEM-PROMPT
     $system = "Du bist ein freundlicher Website-Assistent.\n";
     $system .= "1. Lokaler Artikel zuerst: \"$best_title\" → $best_url\n";
     $system .= "2. Dann Internet-Tipps\n";
     $system .= "3. ALLE Links klickbar\n\nFrage: $msg";
 
-    // 4. DeepSeek
-    $res = wp_remote_post('https://api.deepseek.com/chat/completions', [
-        'headers' => ['Authorization' => "Bearer $key", 'Content-Type' => 'application/json'],
-        'body' => json_encode([
+    // DEEPSEEK CALL
+    $res = wp_remote_post('https://api.deepseek.com/chat/completions', array(
+        'headers' => array('Authorization' => "Bearer $key", 'Content-Type' => 'application/json'),
+        'body'    => json_encode(array(
             'model' => 'deepseek-chat',
-            'messages' => [
-                ['role' => 'system', 'content' => $system],
-                ['role' => 'user',   'content' => $msg]
-            ],
+            'messages' => array(
+                array('role' => 'system', 'content' => $system),
+                array('role' => 'user',   'content' => $msg)
+            ),
             'temperature' => 0.7,
             'max_tokens'  => 900
-        ]),
+        )),
         'timeout' => 90
-    ]);
+    ));
 
     if (is_wp_error($res)) { wp_send_json_error('Internet: ' . $res->get_error_message()); }
     $code = wp_remote_retrieve_response_code($res);
@@ -64,7 +63,7 @@ function dsb_chat() {
     $json = json_decode($body, true);
     $answer = $json['choices'][0]['message']['content'] ?? 'Keine Antwort';
 
-    // 5. Links klickbar
+    // LINKS KLICKBAR
     $answer = preg_replace(
         '/(https?:\/\/[^\s\)]+)/',
         '<a href="$1" target="_blank" rel="noopener" style="color:#0073aa; text-decoration:underline;">$1</a>',
@@ -74,21 +73,20 @@ function dsb_chat() {
     wp_send_json_success($answer);
 }
 
-// CRAWLER – JETZT 113 SEITEN!
 function deepseek_crawl() {
-    $posts = get_posts([
+    $posts = get_posts( array(
         'numberposts' => -1,
-        'post_status' => ['publish', 'private'],
+        'post_status' => array('publish', 'private'),
         'post_type'   => 'any'
-    ]);  // ← NUR EINE KLAMMER!
+    ) );
 
-    $data = [];
+    $data = array();
     foreach ($posts as $p) {
-        $data[] = [
+        $data[] = array(
             'id'      => $p->ID,
             'title'   => $p->post_title,
             'content' => wp_strip_all_tags($p->post_content)
-        ];
+        );
     }
     update_option('dsb_site', $data);
     return count($data);
