@@ -30,4 +30,11 @@ add_action('wp_footer', function() {
         <svg viewBox="0 0 24 24"><path fill="#fff" d="M20 2H4c-1.1 0-2 .9-2 2v14l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
     </div>
     <div id="dsb-chat" class="closed">
-        <div id="dsb-header">KI-Assistent <span id="dsb-close">
+        <div id="dsb-header">KI-Assistent <span id="dsb-close">✕</span></div>
+        <div id="dsb-messages"></div>
+        <div id="dsb-input">
+            <input type="text" id="dsb-text" placeholder="Deine Frage...">
+            <button id="dsb-send">➢</button>
+        </div>
+    </div>
+<?php });
