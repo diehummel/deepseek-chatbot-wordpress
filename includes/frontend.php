@@ -1,29 +1,52 @@
 <?php
 if (!defined('ABSPATH')) exit;
-add_action('wp_ajax_dsb_chat', 'dsb_chat'); add_action('wp_ajax_nopriv_dsb_chat', 'dsb_chat');
+
+add_action('wp_ajax_dsb_chat', 'dsb_chat');
+add_action('wp_ajax_nopriv_dsb_chat', 'dsb_chat');
+
 function dsb_chat() {
-    check_ajax_referer('dsb_nonce', 'nonce');
-    $key = get_option('deepseek_api_key'); if (!$key) wp_die('Key fehlt');
+    check_ajax_referer('dsb', 'nonce');
+    $key = get_option('deepseek_api_key');
+    if (!$key) wp_send_json_error('API-Key fehlt');
+
     $msg = sanitize_text_field($_POST['msg']);
-    $site = get_option('dsb_site', []); if (!$site) { deepseek_crawl(); $site = get_option('dsb_site', []); }
-    $ctx = ''; foreach ($site as $p) $ctx .= "Titel: {$p['title']}\n{$p['content']}\n\n";
+    $site = get_option('dsb_site', []);
+    if (empty($site)) {
+        $count = deepseek_crawl();
+        $site = get_option('dsb_site', []);
+    }
+
+    $ctx = '';
+    foreach ($site as $p) $ctx .= "Titel: {$p['title']}\n{$p['content']}\n\n";
+
     $res = wp_remote_post('https://api.deepseek.com/chat/completions', [
-        'headers' => ['Authorization'=>"Bearer $key", 'Content-Type'=>'application/json'],
+        'headers' => ['Authorization' => "Bearer $key", 'Content-Type' => 'application/json'],
         'body' => json_encode([
             'model' => 'deepseek-chat',
             'messages' => [
-                ['role'=>'system', 'content'=>"Website-Kontext:\n$ctx"],
-                ['role'=>'user', 'content'=>$msg]
-            ]
+                ['role' => 'system', 'content' => "Website-Kontext (vollständig):\n$ctx"],
+                ['role' => 'user', 'content' => $msg]
+            ],
+            'temperature' => 0.7
         ]),
         'timeout' => 60
     ]);
+
+    if (is_wp_error($res)) wp_send_json_error('Netzwerk-Fehler');
     $json = json_decode(wp_remote_retrieve_body($res), true);
-    wp_send_json_success($json['choices'][0]['message']['content'] ?? 'Oops');
+    $answer = $json['choices'][0]['message']['content'] ?? 'Oops';
+    wp_send_json_success($answer);
 }
+
 function deepseek_crawl() {
-    $posts = get_posts(['numberposts'=>-1, 'post_status'=>'publish']);
+    $posts = get_posts(['numberposts' => -1, 'post_status' => 'publish', 'post_type' => ['post', 'page']]);
     $data = [];
-    foreach ($posts as $p) $data[] = ['title'=>$p->post_title, 'content'=>wp_strip_all_tags($p->post_content)];
+    foreach ($posts as $p) {
+        $data[] = [
+            'title' => $p->post_title,
+            'content' => wp_strip_all_tags($p->post_content)
+        ];
+    }
     update_option('dsb_site', $data);
+    return count($data);
 }
